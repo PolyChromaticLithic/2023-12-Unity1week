@@ -12,6 +12,9 @@ public class Player : MonoBehaviour
     private Rigidbody2D rigidBody;
     private Vector2 inputAxis;
     Animator animator;
+    [SerializeField] Transform footprintGenerator;
+    [SerializeField] ParticleSystem footprint_L;
+    [SerializeField] ParticleSystem footprint_R;
 
     void Start()
     {
@@ -37,14 +40,12 @@ public class Player : MonoBehaviour
                 return;
             }
         }
-        // 入力からVector2インスタンスを作成
+        
         Vector2 vector = new Vector2(
-            (int)Input.GetAxis("Horizontal"),
-            (int)Input.GetAxis("Vertical"));
-
-        // キー入力が続いている場合は、入力から作成したVector2を渡す
-        // キー入力がなければ null
-        setStateToAnimator(vector: vector != Vector2.zero ? vector : (Vector2?)null);
+           (int)Input.GetAxis("Horizontal"),
+           (int)Input.GetAxis("Vertical"));
+        Debug.Log(vector);
+        setStateToAnimator(vector: vector.magnitude >= 0.1 ? vector : null);
     }
 
     private void FixedUpdate()
@@ -53,27 +54,42 @@ public class Player : MonoBehaviour
         rigidBody.MovePosition(rigidBody.position + inputAxis.normalized * SPEED  / 25f);
     }
 
+    public void Footprint_L()
+    {
+        footprint_L.Emit(1);
+    }
+
+    public void Footprint_R()
+    {
+        footprint_R.Emit(1);
+    }
+
     private void setStateToAnimator(Vector2? vector)
     {
         if (!vector.HasValue)
         {
             this.animator.speed = 0.0f;
+            Footprint_L();
+            Footprint_R();
             return;
         }
-
-        Debug.Log(vector.Value);
-        this.animator.speed = 1.0f;
         this.animator.SetFloat("x", vector.Value.x);
         this.animator.SetFloat("y", vector.Value.y);
+        this.animator.speed = 1.0f;
+
+        var angle = Mathf.Atan2(-1f * vector.Value.y, vector.Value.x);
+        footprint_L.startRotation = angle + 0.5f * Mathf.PI;
+        footprint_R.startRotation = angle + 0.5f * Mathf.PI;
+        footprintGenerator.eulerAngles = new(0, 0, -1 * (angle * Mathf.Rad2Deg + 90)); //なぜこれで動くのかわからない
 
     }
 
     private Vector2? actionKeyDown()
     {
-        if (Input.GetKeyDown(KeyCode.UpArrow)) return Vector2.up;
-        if (Input.GetKeyDown(KeyCode.LeftArrow)) return Vector2.left;
-        if (Input.GetKeyDown(KeyCode.DownArrow)) return Vector2.down;
-        if (Input.GetKeyDown(KeyCode.RightArrow)) return Vector2.right;
+        if (Input.GetKeyDown(KeyCode.W) || Input.GetKeyDown(KeyCode.UpArrow)) return Vector2.up;
+        if (Input.GetKeyDown(KeyCode.A) || Input.GetKeyDown(KeyCode.LeftArrow)) return Vector2.left;
+        if (Input.GetKeyDown(KeyCode.S) || Input.GetKeyDown(KeyCode.DownArrow)) return Vector2.down;
+        if (Input.GetKeyDown(KeyCode.D) || Input.GetKeyDown(KeyCode.RightArrow)) return Vector2.right;
         return null;
     }
 }
