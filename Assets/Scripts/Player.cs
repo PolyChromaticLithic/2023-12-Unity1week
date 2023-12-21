@@ -16,6 +16,31 @@ public class Player : MonoBehaviour
     [SerializeField] ParticleSystem footprint_L;
     [SerializeField] ParticleSystem footprint_R;
 
+    [SerializeField] Collider2D interactingCollider;
+    Collider2D[] results = new Collider2D[8];
+    Interaction result;
+
+    bool IsInteract()
+    {
+        // collider2dと衝突しているcolliderの数が返ってくる
+        int hitCount = interactingCollider.OverlapCollider(new ContactFilter2D(), results);
+
+        if (hitCount > 0)
+        {
+            Debug.Log("発見");
+            for (int i = 0; i < hitCount; i++)
+            {
+                if (results[i].tag == "Interactable")
+                {
+                    Debug.Log("インタラクト");
+                    result = results[i].gameObject.GetComponent<Interaction>();
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
     void Start()
     {
         
@@ -40,11 +65,19 @@ public class Player : MonoBehaviour
                 return;
             }
         }
+
+        if (Input.GetKeyDown(KeyCode.Space) || Input.GetMouseButtonDown(0))
+        {
+            Debug.Log("キー入力");
+            if (IsInteract())
+            {
+                result.Interact();
+            }
+        }
         
         Vector2 vector = new Vector2(
            (int)Input.GetAxis("Horizontal"),
            (int)Input.GetAxis("Vertical"));
-        Debug.Log(vector);
         setStateToAnimator(vector: vector.magnitude >= 0.1 ? vector : null);
     }
 
@@ -69,8 +102,6 @@ public class Player : MonoBehaviour
         if (!vector.HasValue)
         {
             this.animator.speed = 0.0f;
-            Footprint_L();
-            Footprint_R();
             return;
         }
         this.animator.SetFloat("x", vector.Value.x);
