@@ -15,10 +15,14 @@ public class Player : MonoBehaviour
     [SerializeField] Transform footprintGenerator;
     [SerializeField] ParticleSystem footprint_L;
     [SerializeField] ParticleSystem footprint_R;
+    [SerializeField] Transform pivot;
 
     [SerializeField] Collider2D interactingCollider;
     Collider2D[] results = new Collider2D[8];
     Interaction result;
+
+    public static bool isInteracting = false;
+    public static bool canMove = true;
 
     bool IsInteract()
     {
@@ -50,35 +54,48 @@ public class Player : MonoBehaviour
 
     void Update()
     {
-        // x,ｙの入力値を得る
-        // それぞれ+や-の値と入力の関連付けはInput Managerで設定されている
-        inputAxis.x = Input.GetAxis("Horizontal");
-        inputAxis.y = Input.GetAxis("Vertical");
-
-        if (Input.anyKeyDown)
+        if (canMove)
         {
-            Vector2? action = this.actionKeyDown();
-            if (action.HasValue)
-            {
-                // キー入力があればAnimatorにstateをセットする
-                setStateToAnimator(vector: action.Value);
-                return;
-            }
-        }
+            // x,ｙの入力値を得る
+            // それぞれ+や-の値と入力の関連付けはInput Managerで設定されている
+            inputAxis.x = Input.GetAxis("Horizontal");
+            inputAxis.y = Input.GetAxis("Vertical");
 
-        if (Input.GetKeyDown(KeyCode.Space) || Input.GetMouseButtonDown(0))
-        {
-            Debug.Log("キー入力");
-            if (IsInteract())
+            if (Input.anyKeyDown)
             {
-                result.Interact();
+                Vector2? action = this.actionKeyDown();
+                if (action.HasValue)
+                {
+                    // キー入力があればAnimatorにstateをセットする
+                    setStateToAnimator(vector: action.Value);
+                    return;
+                }
             }
+
+            if (Input.GetKeyDown(KeyCode.Space) || Input.GetMouseButtonDown(0))
+            {
+                if (!isInteracting)
+                {
+                    Debug.Log("キー入力");
+                    if (IsInteract())
+                    {
+                        result.Interact();
+                        isInteracting = true;
+                        canMove = false;
+                    }
+                }
+
+            }
+
+            Vector2 vector = new Vector2(
+               (int)Input.GetAxis("Horizontal"),
+               (int)Input.GetAxis("Vertical"));
+            setStateToAnimator(vector: vector.magnitude >= 0.1 ? vector : null);
         }
-        
-        Vector2 vector = new Vector2(
-           (int)Input.GetAxis("Horizontal"),
-           (int)Input.GetAxis("Vertical"));
-        setStateToAnimator(vector: vector.magnitude >= 0.1 ? vector : null);
+        else
+        {
+            setStateToAnimator(null);
+        }
     }
 
     private void FixedUpdate()
@@ -112,7 +129,7 @@ public class Player : MonoBehaviour
         footprint_L.startRotation = angle + 0.5f * Mathf.PI;
         footprint_R.startRotation = angle + 0.5f * Mathf.PI;
         footprintGenerator.eulerAngles = new(0, 0, -1 * (angle * Mathf.Rad2Deg + 90)); //なぜこれで動くのかわからない
-
+        pivot.eulerAngles = new(0, 0, -1 * (angle * Mathf.Rad2Deg + 90));
     }
 
     private Vector2? actionKeyDown()

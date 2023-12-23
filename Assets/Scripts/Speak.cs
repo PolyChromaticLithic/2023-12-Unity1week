@@ -2,14 +2,21 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using TMPro;
+using DG.Tweening;
+using UnityEngine.UIElements;
 
 public class Speak : MonoBehaviour
 {
     [SerializeField] TextMeshProUGUI speakerObj;
     [SerializeField] TextMeshProUGUI textObj;
 
+    [SerializeField] RectTransform textPanel;
+
+
     public static Speak Instance { get; private set; }
     private Coroutine _showCoroutine;
+
+    private bool isWaiting = false;
 
     // Start is called before the first frame update
     void Start()
@@ -17,6 +24,7 @@ public class Speak : MonoBehaviour
         if (Instance == null)
         {
             Instance = this;
+            textPanel.DOScaleX(0, 0);
         }
         else
         {
@@ -27,37 +35,56 @@ public class Speak : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
-        
+        if (isWaiting)
+        {
+            if (Input.GetKeyDown(KeyCode.Space) || Input.GetMouseButtonDown(0))
+            {
+                isWaiting = false;
+            }
+        }
     }
 
     public void Show(SpeakData[] speakDatas)
     {
-        
+        if (_showCoroutine != null)
+        {
+            StopCoroutine(_showCoroutine);
+        }
+        _showCoroutine = StartCoroutine(_Show(speakDatas));
+    }
+
+    public IEnumerator _Show(SpeakData[] speakDatas)
+    {
+        var wait = new WaitForSeconds(0.05f);
+        textPanel.DOScaleX(1, 0.2f);
         foreach (var speakData in speakDatas)
         {
             speakerObj.text = speakData.speaker;
             textObj.text = speakData.text;
-            Showing(speakData);
+            textObj.maxVisibleCharacters = 0;
+            isWaiting = true;
+            for (int i = 0; i < textObj.text.Length; i++)
+            {
+                Showing();
+                if (!isWaiting)
+                {
+                    break;
+                }
+                yield return wait;
+            }
+            isWaiting = true;
+            textObj.maxVisibleCharacters = textObj.text.Length;
+            yield return new WaitWhile(() => { return isWaiting; });
         }
-
+        textPanel.DOScaleX(0, 0.2f);
+        Player.isInteracting = false;
+        Player.canMove = true;
+        yield break;
     }
 
-    private void Showing(SpeakData speakData)
+    public void Showing()
     {
-        // テキスト全体の長さ
-        var length = textObj.text.Length;
-
-        // １文字ずつ表示する演出
-        for (var i = 0; i < length; i++)
-        {
-            // 徐々に表示文字数を増やしていく
-            textObj.maxVisibleCharacters = i;
-            if (Input.GetKey(KeyCode.Space))
-            {
-                break;
-            }
-        }
-        textObj.maxVisibleCharacters = length;
+        textObj.maxVisibleCharacters = textObj.maxVisibleCharacters + 1;
     }
 }
 

@@ -10,7 +10,7 @@ public class Interaction : MonoBehaviour
 
     static List<Action> actions = new List<Action>
     {
-        //1
+        //0
         () =>
         {
             Speak.Instance.Show(speakDatas[0]);
@@ -20,7 +20,11 @@ public class Interaction : MonoBehaviour
 
     static List<SpeakData[]> speakDatas = new List<SpeakData[]>
     {
-        new SpeakData[]{new SpeakData("Test", "Hello World!")},
+        new SpeakData[]
+        {
+            new SpeakData("Test", "Hello World!\nThis is a sample text!"),
+            new SpeakData("Test", "Have a good day!"),
+        },
     };
     
     // Start is called before the first frame update
