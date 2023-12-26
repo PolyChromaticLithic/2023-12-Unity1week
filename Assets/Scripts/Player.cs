@@ -21,7 +21,10 @@ public class Player : MonoBehaviour
     Collider2D[] results = new Collider2D[8];
     Interaction result;
 
+    [SerializeField] Inventory inventory;
+
     public static bool isInteracting = false;
+    public static bool isInventoryOpening = false;
     public static bool canMove = true;
 
     bool IsInteract()
@@ -54,10 +57,9 @@ public class Player : MonoBehaviour
 
     void Update()
     {
+        
         if (canMove)
         {
-            // x,ｙの入力値を得る
-            // それぞれ+や-の値と入力の関連付けはInput Managerで設定されている
             inputAxis.x = Input.GetAxis("Horizontal");
             inputAxis.y = Input.GetAxis("Vertical");
 
@@ -74,9 +76,8 @@ public class Player : MonoBehaviour
 
             if (Input.GetKeyDown(KeyCode.Space) || Input.GetMouseButtonDown(0))
             {
-                if (!isInteracting)
+                if (!isInteracting && !isInventoryOpening)
                 {
-                    Debug.Log("キー入力");
                     if (IsInteract())
                     {
                         result.Interact();
@@ -84,7 +85,18 @@ public class Player : MonoBehaviour
                         canMove = false;
                     }
                 }
+            }
 
+            if (Input.GetKeyDown(KeyCode.E))
+            {
+                if (!isInteracting && !isInventoryOpening)
+                {
+                    OpenInventory();
+                }
+                else if (isInventoryOpening)
+                {
+                    inventory.Close();
+                }
             }
 
             Vector2 vector = new Vector2(
@@ -94,7 +106,16 @@ public class Player : MonoBehaviour
         }
         else
         {
+            inputAxis.x = 0f;
+            inputAxis.y = 0f;
             setStateToAnimator(null);
+            if (Input.GetKeyDown(KeyCode.E))
+            {
+                if (isInventoryOpening)
+                {
+                    inventory.Close();
+                }
+            }
         }
     }
 
@@ -102,6 +123,13 @@ public class Player : MonoBehaviour
     {
         // 速度を代入する
         rigidBody.MovePosition(rigidBody.position + inputAxis.normalized * SPEED  / 25f);
+    }
+
+    public void OpenInventory()
+    {
+        isInventoryOpening = true;
+        canMove = false;
+        inventory.Open();
     }
 
     public void Footprint_L()
