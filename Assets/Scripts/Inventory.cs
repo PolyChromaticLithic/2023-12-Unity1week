@@ -5,6 +5,8 @@ using UnityEngine.EventSystems;
 using DG.Tweening;
 using System;
 using TMPro;
+using UnityEngine.UI;
+using System.Linq;
 
 public class Inventory : MonoBehaviour
 {
@@ -12,11 +14,26 @@ public class Inventory : MonoBehaviour
     [SerializeField] private ItemSlot[] itemSlots;
     [SerializeField] private TextMeshProUGUI nameText;
     [SerializeField] private TextMeshProUGUI descriptionText;
+    [SerializeField] private Button useButton;
+    [SerializeField] private Button putButton;
     private int selectionIndex = 0;
     [SerializeField] private RectTransform inventoryRectTransform;
 
-    [NonSerialized] public ItemData[] itemDatas = new ItemData[8];
+    [NonSerialized] public List<ItemData> itemDatas = new();
 
+    static public Inventory Instance;
+
+    private void Awake()
+    {
+        if (Instance == null)
+        {
+            Instance = this;
+        }
+        else if (Instance != this)
+        {
+            Destroy(gameObject);
+        }
+    }
     
 
     public int SelectionIndex
@@ -32,6 +49,8 @@ public class Inventory : MonoBehaviour
             itemSlots[selectionIndex].IsSelected = true;
             nameText.text = itemDatas[selectionIndex].Name;
             descriptionText.text = itemDatas[selectionIndex].Description;
+            useButton.interactable = itemDatas[selectionIndex].IsUsable;
+            putButton.interactable = itemDatas[selectionIndex].IsDiscardable;
         }
     }
 
@@ -46,8 +65,14 @@ public class Inventory : MonoBehaviour
     public void Open()
     {
         selectionIndex = 0;
+        foreach (var item in itemSlots)
+        {
+            item.IsSelected = false;
+        }
         nameText.text = "スロットを選択してください。";
         descriptionText.text = "";
+        useButton.interactable = false;
+        putButton.interactable = false;
         inventoryRectTransform.DOScaleX(1f, 0.2f);
         
     }
@@ -60,11 +85,78 @@ public class Inventory : MonoBehaviour
         Player.isInventoryOpening = false;
     }
 
+    public void UpdateInventory()
+    {
+        itemDatas.Sort((a, b) =>
+        {
+            if (a.ID == 0)
+            {
+                return 1;
+            }
+            else if (b.ID == 0)
+            {
+                return -1;
+            }
+            else
+            {
+                return a.ID - b.ID;
+            }
+        });
+        for (int i = 0; i < itemSlots.Length; i++)
+        {
+            itemSlots[i].ItemData = itemDatas[i];
+        }
+        Player.instance.SPEED = 1f - itemDatas.Where(x => x.ID != 0).Count() * 0.1f;
+    }
+
+    public void AddItem(int id, int amount)
+    {
+        ItemData itemData = itemDatas.Find(itemData => itemData.ID == id);
+        if (itemData == null)
+        {
+            itemData = new ItemData(id, amount);
+            itemDatas.Add(itemData);
+        }
+        else
+        {
+            itemData.amount += amount;
+        }
+        UpdateInventory();
+    }
+
+    public void RemoveItem(int id, int amount)
+    {
+        ItemData itemData = itemDatas.Find(itemData => itemData.ID == id);
+        if (itemData == null)
+        {
+            return;
+        }
+        else
+        {
+            itemData.amount -= amount;
+            if (itemData.amount <= 0)
+            {
+                itemDatas.Remove(itemData);
+            }
+        }
+        UpdateInventory();
+    }
+
+    public void UseItem()
+    {
+        ItemData itemData = itemDatas[selectionIndex];
+        if (itemData.IsUsable)
+        {
+            itemData.UseAction[itemDatas[selectionIndex].ID]();
+            RemoveItem(itemData.ID, 1);
+        }
+    }
+
     void Start()
     {
-        for (int i = 0; i < itemDatas.Length; i++)
+        for (int i = 0; i < itemSlots.Length; i++)
         {
-            itemDatas[i] = ItemData.Empty;
+            itemDatas.Add(ItemData.Empty);
             itemSlots[i].ItemData = itemDatas[i];
         }
         

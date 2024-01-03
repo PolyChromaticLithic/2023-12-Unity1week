@@ -1,14 +1,17 @@
+using System;
 using System.Collections;
 using System.Collections.Generic;
+using TMPro;
 using UnityEngine;
+using UnityEngine.UI;
 
 /**
  * ÉLÉÉÉâÇÃç¿ïWÇïœçXÇ∑ÇÈController
  */
 public class Player : MonoBehaviour
 {
-    [SerializeField]
-    float SPEED = 1.0f;
+    public const int MAX_HP = 200;
+    public float SPEED = 1f;
     private Rigidbody2D rigidBody;
     private Vector2 inputAxis;
     Animator animator;
@@ -26,6 +29,32 @@ public class Player : MonoBehaviour
     public static bool isInteracting = false;
     public static bool isInventoryOpening = false;
     public static bool canMove = true;
+    public static Transform playerTransform;
+    public static Player instance;
+
+    [SerializeField] Slider HPBar;
+    [SerializeField] TextMeshProUGUI HPText;
+    private double hp;
+    public double HP
+    {
+        get { return hp; }
+        set
+        {
+            hp = value;
+            if (hp <= 0)
+            {
+                hp = 0;
+                Debug.Log("GameOver");
+            }
+            if (hp >= MAX_HP)
+            {
+                hp = MAX_HP;
+            }
+            HPBar.value = (int)Math.Ceiling(hp);
+            HPText.text = $"HP {(int)Math.Ceiling(hp)} / {MAX_HP}";
+            
+        }
+    }
 
     bool IsInteract()
     {
@@ -50,9 +79,11 @@ public class Player : MonoBehaviour
 
     void Start()
     {
-        
+        playerTransform = transform;
         this.rigidBody = GetComponent<Rigidbody2D>();
         this.animator = GetComponent<Animator>();
+        instance = this;
+        HP = MAX_HP;
     }
 
     void Update()
@@ -93,10 +124,6 @@ public class Player : MonoBehaviour
                 {
                     OpenInventory();
                 }
-                else if (isInventoryOpening)
-                {
-                    inventory.Close();
-                }
             }
 
             Vector2 vector = new Vector2(
@@ -109,13 +136,14 @@ public class Player : MonoBehaviour
             inputAxis.x = 0f;
             inputAxis.y = 0f;
             setStateToAnimator(null);
-            if (Input.GetKeyDown(KeyCode.E))
+            if (Input.GetKeyDown(KeyCode.E) || Input.GetKeyDown(KeyCode.Escape))
             {
                 if (isInventoryOpening)
                 {
                     inventory.Close();
                 }
             }
+
         }
     }
 
@@ -151,7 +179,7 @@ public class Player : MonoBehaviour
         }
         this.animator.SetFloat("x", vector.Value.x);
         this.animator.SetFloat("y", vector.Value.y);
-        this.animator.speed = 1.0f;
+        this.animator.speed = (SPEED + 1.0f) / 2f;
 
         var angle = Mathf.Atan2(-1f * vector.Value.y, vector.Value.x);
         footprint_L.startRotation = angle + 0.5f * Mathf.PI;
@@ -168,4 +196,6 @@ public class Player : MonoBehaviour
         if (Input.GetKeyDown(KeyCode.D) || Input.GetKeyDown(KeyCode.RightArrow)) return Vector2.right;
         return null;
     }
+
+    
 }

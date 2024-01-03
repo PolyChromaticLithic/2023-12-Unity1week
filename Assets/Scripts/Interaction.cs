@@ -14,7 +14,10 @@ public class Interaction : MonoBehaviour
         () =>
         {
             Speak.Instance.Show(speakDatas[0]);
-            Debug.Log("Speak");
+            Inventory.Instance.AddItem(1,1);
+            Inventory.Instance.AddItem(2,12);
+            Inventory.Instance.AddItem(4,3);
+            Inventory.Instance.AddItem(3,251);
         },
     };
 

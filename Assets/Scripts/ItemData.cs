@@ -1,3 +1,4 @@
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
@@ -60,9 +61,9 @@ public class ItemData
                 case 1:
                     return "家の前に置かれた、奇妙なプレゼント。不思議な機械が入っている。";
                 case 2:
-                    return "歯にしみるほど甘くて、ピリッとスパイシーなクッキー。体力を14回復する。";
+                    return "甘くてスパイシーなクッキー。体力を14回復する。";
                 case 3:
-                    return "ライ麦パンのトーストにチキンのスライスとチーズを挟んだサンドイッチ。\n噛みしめるごとに旨みがあふれる。体力を152回復する。";
+                    return "ライ麦パンのトーストにチキンのスライスとチーズを挟んだサンドイッチ。\n噛みしめるごとに旨みがにじみだす。体力を152回復する。";
                 case 4:
                     return "収穫したてのニンジン。みずみずしさを保っている。体力を21回復する。";
                 default:
@@ -71,6 +72,99 @@ public class ItemData
         }
     }
     public int amount;
+    public bool IsUsable
+    {
+        get
+        {
+            switch (id)
+            {
+                case 0:
+                    return false;
+                case 1:
+                    return false;
+                case 2:
+                    return true;
+                case 3:
+                    return true;
+                case 4:
+                    return true;
+                default:
+                    return false;
+            }
+        }
+    }
+
+    public bool IsDiscardable
+    {
+        get
+        {
+            switch (id)
+            {
+                case 0:
+                    return false;
+                case 1:
+                    return false;
+                case 2:
+                    return true;
+                case 3:
+                    return true;
+                case 4:
+                    return true;
+                default:
+                    return false;
+            }
+        }
+    }
+
+    public List<Action> UseAction = new List<Action>
+    {
+        //0
+        () =>
+        {
+            Player.instance.HP += 0;
+        },
+        //1
+        () =>
+        {
+            Player.instance.HP += 0;
+        },
+        //2
+        () =>
+        {
+            Player.instance.HP += 14;
+        },
+        //3
+        () =>
+        {
+            Player.instance.HP += 152;
+        },
+        //4
+        () =>
+        {
+            Player.instance.HP += 21;
+        },
+        //5
+        () =>
+        {
+            Player.instance.HP += 0;
+        },
+        //6
+        () =>
+        {
+            Player.instance.HP += 0;
+        },
+        //7
+        () =>
+        {
+            Player.instance.HP += 0;
+        },
+        //8
+        () =>
+        {
+            Player.instance.HP += 0;
+        },
+
+    };
 
     static public ItemData Empty
     {
